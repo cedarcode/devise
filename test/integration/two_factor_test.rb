@@ -136,6 +136,24 @@ class TwoFactorAuthenticationTest < Devise::IntegrationTest
     assert_not warden.authenticated?(:user_with_two_factor)
   end
 
+  test 'two-factor sign-in after a password change does not authenticate' do
+    user = create_user_with_two_factor(otp_secret: '123456')
+
+    post user_with_two_factor_session_path, params: {
+      user_with_two_factor: { email: user.email, password: '12345678' }
+    }
+    assert_redirected_to user_with_two_factor_new_two_factor_test_otp_path
+
+    user.update!(password: 'newpassword123', password_confirmation: 'newpassword123')
+
+    post user_with_two_factor_two_factor_path, params: {
+      otp_attempt: user.otp_secret
+    }
+
+    assert_redirected_to new_user_with_two_factor_session_path
+    assert_not warden.authenticated?(:user_with_two_factor)
+  end
+
   test 'visiting two-factor challenge page without sign-in redirects to login' do
     get user_with_two_factor_new_two_factor_test_otp_path
 

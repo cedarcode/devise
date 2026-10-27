@@ -22,7 +22,7 @@ module Devise
         model = Devise.mappings[scope].to
 
         session[pending_sign_in_key_for(scope)] = pending_sign_in_verifier.generate(
-          { "resource_id" => resource.id, "remember_me" => remember_me },
+          { "record" => model.serialize_into_session(resource), "remember_me" => remember_me },
           purpose: scope, expires_in: model.two_factor_within
         )
       end
@@ -34,10 +34,11 @@ module Devise
 
       # Returns the resource that waits for the second factor, or nil when the
       # pending sign-in is missing, expired, tampered with or was stored for
-      # another scope.
+      # another scope. It also checks the authenticatable salt, so a password
+      # change cancels the pending sign-in.
       def resource_from_pending_sign_in_for(scope)
         data = pending_sign_in_data_for(scope)
-        Devise.mappings[scope].to.where(id: data["resource_id"]).first if data
+        Devise.mappings[scope].to.serialize_from_session(*data["record"]) if data
       end
 
       # Returns the remember me choice made when the first factor passed.

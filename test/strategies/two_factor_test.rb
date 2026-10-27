@@ -62,7 +62,7 @@ class TwoFactorStrategyTest < ActiveSupport::TestCase
 
   def pending_sign_in(user, purpose:)
     Rails.application.message_verifier("devise.two_factor").generate(
-      { "resource_id" => user.id, "remember_me" => false },
+      { "record" => UserWithTwoFactor.serialize_into_session(user), "remember_me" => false },
       purpose: purpose
     )
   end
