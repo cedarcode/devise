@@ -100,6 +100,22 @@ class TwoFactorAuthenticationTest < Devise::IntegrationTest
     assert_not warden.authenticated?(:user_with_two_factor)
   end
 
+  test 'two-factor sign-in with a valid attempt for a strategy that is not for two factor does not authenticate' do
+    user = create_user_with_two_factor(otp_secret: '123456')
+
+    post user_with_two_factor_session_path, params: {
+      user_with_two_factor: { email: user.email, password: '12345678' }
+    }
+    assert_redirected_to user_with_two_factor_new_two_factor_test_otp_path
+
+    post user_with_two_factor_two_factor_path, params: {
+      magic_link_token: Devise::Strategies::TestMagicLink.token_for(user)
+    }
+
+    assert_response :success
+    assert_not warden.authenticated?(:user_with_two_factor)
+  end
+
   test 'two-factor sign-in with expired session does not authenticate' do
     user = create_user_with_two_factor(otp_secret: '123456')
 

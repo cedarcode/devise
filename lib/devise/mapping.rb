@@ -84,17 +84,15 @@ module Devise
     end
 
     def strategies
-      @strategies ||= begin
-        keys = self.modules
-        if to.respond_to?(:two_factor_methods) && to.two_factor_methods
-          keys = keys + Array(to.two_factor_methods)
-        end
-        STRATEGIES.values_at(*keys).compact.uniq.reverse
-      end
+      @strategies ||= STRATEGIES.values_at(*self.modules).compact.uniq.reverse
     end
 
     def no_input_strategies
       self.strategies & Devise::NO_INPUT
+    end
+
+    def two_factor_strategies
+      @two_factor_strategies ||= STRATEGIES.values_at(*to.two_factor_modules).compact.uniq
     end
 
     def routes

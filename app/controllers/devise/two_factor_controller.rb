@@ -17,8 +17,9 @@ class Devise::TwoFactorController < DeviseController
 
   # POST /users/two_factor
   # All methods POST here. Warden picks the right strategy via valid?.
+  # Only 2FA strategies run, so a first-factor strategy can't take the request.
   def create
-    self.resource = warden.authenticate!(auth_options)
+    self.resource = warden.authenticate!(*devise_mapping.two_factor_strategies, auth_options)
     set_flash_message!(:notice, :signed_in, scope: :"devise.sessions")
     sign_in(resource_name, resource)
     yield resource if block_given?
