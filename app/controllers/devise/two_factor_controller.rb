@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Devise::TwoFactorController < DeviseController
+  include Devise::TwoFactor::PendingSignIn
+
   prepend_before_action :require_no_authentication
   prepend_before_action :set_authenticating_resource
 
@@ -37,8 +39,7 @@ class Devise::TwoFactorController < DeviseController
   private
 
   def set_authenticating_resource
-    resource_id = session["devise.two_factor.resource_id"]
-    @authenticating_resource = resource_class.where(id: resource_id).first if resource_id
+    @authenticating_resource = resource_from_pending_sign_in_for(resource_name)
     return if @authenticating_resource
 
     set_flash_message!(:alert, :sign_in_not_initiated, scope: :"devise.failure")

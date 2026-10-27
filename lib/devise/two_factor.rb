@@ -2,6 +2,7 @@
 
 module Devise
   module TwoFactor
-    autoload :UrlHelpers, "devise/two_factor/url_helpers"
+    autoload :PendingSignIn, "devise/two_factor/pending_sign_in"
+    autoload :UrlHelpers,    "devise/two_factor/url_helpers"
   end
 end

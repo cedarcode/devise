@@ -12,7 +12,7 @@ class TwoFactorAuthenticationTest < Devise::IntegrationTest
     click_button 'Log In'
 
     assert_not warden.authenticated?(:user_with_two_factor)
-    assert_equal user.id, session["devise.two_factor.resource_id"]
+    assert session["devise.two_factor.user_with_two_factor"]
   end
 
   test 'sign in without 2FA enabled proceeds normally' do
@@ -24,7 +24,7 @@ class TwoFactorAuthenticationTest < Devise::IntegrationTest
     click_button 'Log In'
 
     assert warden.authenticated?(:user_with_two_factor)
-    assert_nil session["devise.two_factor.resource_id"]
+    assert_nil session["devise.two_factor.user_with_two_factor"]
   end
 
   test 'password reset with 2FA enabled redirects to two factor challenge' do
@@ -37,7 +37,7 @@ class TwoFactorAuthenticationTest < Devise::IntegrationTest
     click_button 'Change my password'
 
     assert_not warden.authenticated?(:user_with_two_factor)
-    assert session["devise.two_factor.resource_id"]
+    assert session["devise.two_factor.user_with_two_factor"]
   end
 
   test 'password reset without 2FA signs in directly' do
@@ -115,6 +115,24 @@ class TwoFactorAuthenticationTest < Devise::IntegrationTest
       otp_attempt: user.otp_secret
     }
 
+    assert_not warden.authenticated?(:user_with_two_factor)
+  end
+
+  test 'two-factor sign-in after two_factor_within does not authenticate' do
+    user = create_user_with_two_factor(otp_secret: '123456')
+
+    post user_with_two_factor_session_path, params: {
+      user_with_two_factor: { email: user.email, password: '12345678' }
+    }
+    assert_redirected_to user_with_two_factor_new_two_factor_test_otp_path
+
+    Timecop.travel((Devise.two_factor_within + 1.minute).from_now) do
+      post user_with_two_factor_two_factor_path, params: {
+        otp_attempt: user.otp_secret
+      }
+    end
+
+    assert_redirected_to new_user_with_two_factor_session_path
     assert_not warden.authenticated?(:user_with_two_factor)
   end
 

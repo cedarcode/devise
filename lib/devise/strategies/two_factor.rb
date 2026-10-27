@@ -5,12 +5,14 @@ require 'devise/strategies/base'
 module Devise
   module Strategies
     class TwoFactor < Base
+      include Devise::TwoFactor::PendingSignIn
+
       def valid?
-        session["devise.two_factor.resource_id"].present?
+        pending_sign_in?(scope)
       end
 
       def authenticate!
-        resource = find_pending_resource
+        resource = resource_from_pending_sign_in_for(scope)
         return fail!(:two_factor_session_expired) unless resource
         return fail!(resource.unauthenticated_message) unless resource.valid_for_authentication? { true }
 
@@ -19,7 +21,7 @@ module Devise
         unless halted?
           restore_remember_me(resource)
           resource.after_database_authentication
-          cleanup_two_factor_session!
+          clear_pending_sign_in_for(scope)
           success!(resource)
         end
       end
@@ -32,18 +34,8 @@ module Devise
 
       private
 
-      def find_pending_resource
-        return unless session["devise.two_factor.resource_id"]
-        mapping.to.where(id: session["devise.two_factor.resource_id"]).first
-      end
-
       def restore_remember_me(resource)
-        resource.remember_me = session["devise.two_factor.remember_me"] if resource.respond_to?(:remember_me=)
-      end
-
-      def cleanup_two_factor_session!
-        session.delete("devise.two_factor.resource_id")
-        session.delete("devise.two_factor.remember_me")
+        resource.remember_me = remember_me_from_pending_sign_in?(scope) if resource.respond_to?(:remember_me=)
       end
     end
   end

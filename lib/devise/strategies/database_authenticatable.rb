@@ -6,6 +6,8 @@ module Devise
   module Strategies
     # Default strategy for signing in a user, based on their email and password in the database.
     class DatabaseAuthenticatable < Authenticatable
+      include Devise::TwoFactor::PendingSignIn
+
       def authenticate!
         resource  = password.present? && mapping.to.find_for_database_authentication(authentication_hash)
         hashed = false
@@ -32,8 +34,7 @@ module Devise
       private
 
       def initiate_two_factor_authentication!(resource)
-        session["devise.two_factor.resource_id"] = resource.id
-        session["devise.two_factor.remember_me"] = remember_me?
+        store_pending_sign_in_for(scope, resource, remember_me: remember_me?)
         default_method = resource.enabled_two_factors.first
         redirect!(new_two_factor_challenge_path(scope, default_method))
       end

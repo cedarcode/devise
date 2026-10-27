@@ -10,7 +10,7 @@ module Devise
       end
 
       module ClassMethods
-        Devise::Models.config(self, :two_factor_methods)
+        Devise::Models.config(self, :two_factor_methods, :two_factor_within)
 
         def two_factor_methods=(methods)
           @two_factor_methods = methods

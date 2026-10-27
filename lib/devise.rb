@@ -318,6 +318,10 @@ module Devise
   mattr_accessor :two_factor_methods
   @@two_factor_methods = []
 
+  # Time the user has to complete the second factor after passing the first one.
+  mattr_accessor :two_factor_within
+  @@two_factor_within = 5.minutes
+
   # Registry of two-factor method configs set via register_two_factor_method.
   mattr_reader :two_factor_method_configs
   @@two_factor_method_configs = {}
