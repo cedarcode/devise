@@ -49,6 +49,16 @@ class TwoFactorStrategyTest < ActiveSupport::TestCase
     assert_equal :two_factor_session_expired, strategy.message
   end
 
+  test 'clears a pending sign-in stored for another scope' do
+    user = create_user_with_two_factor
+    session = { "devise.two_factor.user_with_two_factor" => pending_sign_in(user, purpose: :admin) }
+    strategy = test_otp_strategy(session)
+
+    strategy.authenticate!
+    assert_not session.key?("devise.two_factor.user_with_two_factor")
+    assert_not strategy.valid?
+  end
+
   private
 
   def env_with_session(session = {})

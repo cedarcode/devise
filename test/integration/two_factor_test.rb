@@ -136,6 +136,22 @@ class TwoFactorAuthenticationTest < Devise::IntegrationTest
     assert_not warden.authenticated?(:user_with_two_factor)
   end
 
+  test 'two-factor sign-in after two_factor_within clears the pending sign-in' do
+    user = create_user_with_two_factor(otp_secret: '123456')
+
+    post user_with_two_factor_session_path, params: {
+      user_with_two_factor: { email: user.email, password: '12345678' }
+    }
+
+    Timecop.travel((Devise.two_factor_within + 1.minute).from_now) do
+      post user_with_two_factor_two_factor_path, params: {
+        otp_attempt: user.otp_secret
+      }
+    end
+
+    assert_nil session["devise.two_factor.user_with_two_factor"]
+  end
+
   test 'two-factor sign-in after a password change does not authenticate' do
     user = create_user_with_two_factor(otp_secret: '123456')
 
@@ -152,6 +168,7 @@ class TwoFactorAuthenticationTest < Devise::IntegrationTest
 
     assert_redirected_to new_user_with_two_factor_session_path
     assert_not warden.authenticated?(:user_with_two_factor)
+    assert_nil session["devise.two_factor.user_with_two_factor"]
   end
 
   test 'visiting two-factor challenge page without sign-in redirects to login' do

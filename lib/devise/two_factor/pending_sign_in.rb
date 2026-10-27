@@ -36,9 +36,14 @@ module Devise
       # pending sign-in is missing, expired, tampered with or was stored for
       # another scope. It also checks the authenticatable salt, so a password
       # change cancels the pending sign-in.
+      #
+      # Like Warden does for signed-in users, it removes a pending sign-in
+      # that can no longer be used from the session.
       def resource_from_pending_sign_in_for(scope)
         data = pending_sign_in_data_for(scope)
-        Devise.mappings[scope].to.serialize_from_session(*data["record"]) if data
+        resource = Devise.mappings[scope].to.serialize_from_session(*data["record"]) if data
+        clear_pending_sign_in_for(scope) unless resource
+        resource
       end
 
       # Returns the remember me choice made when the first factor passed.
