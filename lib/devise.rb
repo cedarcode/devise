@@ -466,7 +466,8 @@ module Devise
   #
   #   +name+       - String representing the name of the 2FA method. This will be used to identify it.
   #   +model+      - String representing the load path to a custom *model* for this 2FA method (to autoload.)
-  #   +strategy+   - Symbol representing if this module got a custom *strategy*.
+  #   +strategy+   - Symbol with the name of the Warden *strategy* that verifies this 2FA method.
+  #                  Required. Only these strategies run when the user submits the second factor.
   #   +route+      - Generates extension-specific routes and URL helpers (e.g., credential management
   #                  endpoints). This is separate from the core challenge/create routes that Devise
   #                  generates automatically from +two_factor_methods+. Accepts true (defaults route
@@ -475,12 +476,13 @@ module Devise
   #
   # == Examples:
   #
-  #   Devise.register_two_factor_method(:my_two_factor_method)
-  #   Devise.register_two_factor_method(:my_two_factor_method, model: 'my_two_factor_method/model')
+  #   Devise.register_two_factor_method(:my_two_factor_method, strategy: :my_two_factor_method)
+  #   Devise.register_two_factor_method(:my_two_factor_method, model: 'my_two_factor_method/model', strategy: :my_two_factor_method)
   #   Devise.register_two_factor_method(:my_two_factor_method, model: 'my_two_factor_method/model', strategy: :my_two_factor_method, route: true)
   #
   def self.register_two_factor_method(name, options = {})
     options.assert_valid_keys(:model, :strategy, :route)
+    raise ArgumentError, "Two-factor method #{name} needs a :strategy option" unless options[:strategy]
 
     two_factor_method_configs[name.to_sym] = options
 

@@ -95,10 +95,11 @@ class DeviseTest < ActiveSupport::TestCase
   end
 
   test 'register_two_factor_method with route populates ROUTES and URL_HELPERS' do
-    Devise.register_two_factor_method(:fake_rt, model: 'x', route: { fake_rt: [nil, :new] })
+    Devise.register_two_factor_method(:fake_rt, model: 'x', strategy: :fake_rt_strategy, route: { fake_rt: [nil, :new] })
     assert_equal :fake_rt, Devise::ROUTES[:fake_rt]
     assert_equal [nil, :new], Devise::URL_HELPERS[:fake_rt]
     Devise.two_factor_method_configs.delete(:fake_rt)
+    Devise::STRATEGIES.delete(:fake_rt)
     Devise::ROUTES.delete(:fake_rt)
     Devise::URL_HELPERS.delete(:fake_rt)
   end
@@ -107,6 +108,14 @@ class DeviseTest < ActiveSupport::TestCase
     assert_raises(ArgumentError) do
       Devise.register_two_factor_method(:bad, model: 'x', unknown: true)
     end
+  end
+
+  test 'register_two_factor_method without a strategy raises' do
+    error = assert_raises(ArgumentError) do
+      Devise.register_two_factor_method(:no_strategy, model: 'x')
+    end
+    assert_equal 'Two-factor method no_strategy needs a :strategy option', error.message
+    assert_not Devise.two_factor_method_configs.key?(:no_strategy)
   end
 
   test 'Devise.secure_compare fails when comparing different strings or nil' do
